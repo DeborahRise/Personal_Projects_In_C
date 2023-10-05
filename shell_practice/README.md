@@ -1,0 +1,5 @@
+# CUSTOM SHELL IMPLEMENTATION PRACTICE
+
+### Working with the different system calls.
+
+##### PID, PPID, STRTOK, EXECVE, CMDLINE ARGS, GETLINE FUNCT, FILE I/O
