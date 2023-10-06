@@ -7,11 +7,12 @@
  *
  */
 
-int main(int ac, char **av, char **envp)
+int main()
 {
 
 
 	pid_t forkpid;
+	char *av[] = {"/bin/ls", "-l", "/tmp", NULL};
 
 	forkpid = fork();
 
@@ -19,14 +20,14 @@ int main(int ac, char **av, char **envp)
 		return (-1);
 	if (forkpid == 0)
 	{
-	if (execve(av[1], av, NULL) == -1)
+		if (execve(av[0], av, NULL) == -1)
 			return (-1);
-	printf("child\n");
+		printf("child\n");
 	}
 	else
 	{
 		wait(NULL);
-		printf("parent\n");
+		printf("pid is %u\n ppid is %u\n forkpid in parent is %u\n", getpid(), getppid(), forkpid);
 	}
 	return (0);
 }

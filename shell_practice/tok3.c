@@ -25,7 +25,7 @@ char *tok(char *str, char *delim)
 	copy = strdup(str);
 
 
-	i = 0, k = 0;
+	i = 0;
 	while (k < del && copy[i])
 	{
 		if (copy[i] != delim[k])
