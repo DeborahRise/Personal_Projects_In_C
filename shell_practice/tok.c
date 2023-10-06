@@ -2,14 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 /**
- *
+ * tok - a custom strtok function
+ * @str: the string to be tokenized
+ * @delim: the delimeters to tokenize by
+ * Return: a char pointer to token.
  */
 
 char *tok(char *str, char *delim)
 {
 	static char *GRAND = NULL;
 
-	int i, k, del = strlen(delim);
+	int i, k, found, del = strlen(delim);
 	char *copy;
 
 	if (str == NULL)
@@ -23,31 +26,27 @@ char *tok(char *str, char *delim)
 	}
 
 	copy = strdup(str);
-
-
-	i = 0, k = 0;
-	while (k < del && copy[i])
+	i = 0;
+	while (copy[i] != '\0')
 	{
-		if (copy[i] != delim[k])
-			k++;
-		else
+		found = 0;
+		for (k = 0; k < del; k++)
 		{
-			if (copy[i + 1])
+			if (copy[i] == delim[k])
 			{
-				GRAND = copy + i + 1;
-				return (NULL);
+				found = 1;
+				break;
 			}
-			else
-			{
-				GRAND = NULL;
-				return (NULL);
-
-			}
-
 		}
-
-
+		if (!found)
+		{
+			break;
+		}
+		i++;
 	}
+	copy = copy + i;
+
+	i = 0;
 	while (copy[i] != '\0')
 	{
 		k = 0;
