@@ -6,7 +6,57 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+extern char **environ;
+
 #define MAX_INPUT_SIZE 100
+
+char *pathname(const char *command, const char *directory)
+{
+	char *pathname = NULL;
+	size_t len = strlen(directory) + strlen(command) + 2; // +2 for '/' and '\0'
+
+	pathname = (char *)malloc(sizeof(char) * len);
+	if (pathname == NULL)
+	{
+		perror("malloc");
+		return NULL;
+	}
+	size_t i = 0;
+
+
+	while (directory[i] != '\0' && i < len - 1)
+	{
+		pathname[i] = directory[i];
+		i++;
+	}
+
+
+	if (i < len - 1)
+	{
+		pathname[i] = '/';
+		i++;
+	}
+
+	size_t j = 0;
+	while (command[j] != '\0' && i < len - 1)
+	{
+		pathname[i] = command[j];
+		i++;
+		j++;
+	}
+	pathname[i] = '\0';
+	if (access(pathname,  F_OK | X_OK) == 0)
+	{
+		return (pathname);
+	}
+	else
+	{
+		free(pathname);
+		return (NULL);
+	}
+}
+
+
 
 
 int file_exist(const char *command, const char *directory)
@@ -39,11 +89,11 @@ int file_exist(const char *command, const char *directory)
 	printf("the path is: %s\n", path);
 	Kup = (access(path, F_OK | X_OK));
 	printf("kup: %d\n", Kup);
-			if (Kup == 0)
-			return (0);
-			else
-			return (-1);
-			}
+	if (Kup == 0)
+		return (0);
+	else
+		return (-1);
+}
 int main(void)
 {
 	char *gcmd = NULL, *gprompt = "($) ";
@@ -66,29 +116,48 @@ int main(void)
 
 			if (token != NULL)
 			{
-				int ac = 0;
-				char *av[MAX_INPUT_SIZE];
-
-				while (token != NULL && ac < MAX_INPUT_SIZE - 1)
+				if (strcmp(token, "exit") == 0)
 				{
-					av[ac] = token;
-					token = strtok(NULL, " ");
-					ac++;
+					/* Handle the "exit" command */
+					free(gcmd);
+					return (0);
 				}
-
-				av[ac] = NULL;
-
-				char *path = getenv("PATH");
-				printf("PATH IS: %s\n", path);
-				if (path != NULL)
+				else if (strcmp(token, "env") == 0)
 				{
-					directory = strtok(path, ":");
-					while (directory != NULL)
+					// Handle the "env" command to print the environment
+					char **env = environ;
+					while (*env != NULL)
 					{
-						printf("directory is: %s\n", directory);
-						int ret_file = file_exist(av[0], directory);
-						if (ret_file == 0)
+						printf("%s\n", *env);
+						env++;
+					}
+				}
+				else
+				{
+					int ac = 0;
+					char *av[MAX_INPUT_SIZE];
+
+					while (token != NULL && ac < MAX_INPUT_SIZE - 1)
+					{
+						av[ac] = token;
+						token = strtok(NULL, " ");
+						ac++;
+					}
+
+					av[ac] = NULL;
+
+					char *path = getenv("PATH");
+					printf("PATH IS: %s\n", path);
+					if (path != NULL)
+					{
+						directory = strtok(path, ":");
+						while (directory != NULL)
 						{
+							printf("directory is: %s\n", directory);
+							char *pathstep = pathname(av[0], directory);
+							if (pathstep == NULL)
+								return (-1);
+
 							gpid = fork();
 							if (gpid == -1)
 							{
@@ -98,7 +167,7 @@ int main(void)
 							if (gpid == 0)
 							{
 
-								if (execvp(av[0], av) == -1)
+								if (execve(pathstep, av, NULL) == -1)
 								{
 									perror(av[0]);
 									return (-1);
@@ -112,18 +181,18 @@ int main(void)
 						}
 						directory = strtok(NULL, ":");
 					}
-				}
-				if (directory == NULL) {
-					fprintf(stderr, "Command not found: %s\n", av[0]);
+					if (directory == NULL)
+					{
+						fprintf(stderr, "Command not found: %s\n", av[0]);
+					}
 				}
 			}
+			else
+			{
+				break;
+			}
 		}
-		else
-		{
-			break;
-		}
-	}
 
-	free(gcmd);
-	return 0;
-}
+		free(gcmd);
+		return 0;
+	}
