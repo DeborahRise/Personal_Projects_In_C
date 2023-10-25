@@ -100,7 +100,7 @@ int main(void)
 	ssize_t ret;
 	size_t gsize = 0;
 	pid_t gpid;
-	char *directory;
+	char *directory, *pathstep;
 
 	while (1)
 	{
@@ -119,8 +119,14 @@ int main(void)
 				if (strcmp(token, "exit") == 0)
 				{
 					/* Handle the "exit" command */
+					token = strtok(NULL, " ");
+					int status = 0;
+					if (token != NULL)
+					{
+						status = atoi(token);
+					}
 					free(gcmd);
-					return (0);
+					exit(status);
 				}
 				else if (strcmp(token, "env") == 0)
 				{
@@ -130,6 +136,38 @@ int main(void)
 					{
 						printf("%s\n", *env);
 						env++;
+					}
+				}
+				else if (strcmp(token, "setenv") == 0)
+				{
+
+					token = strtok(NULL, " ");
+					char *value = strtok(NULL, " ");
+					if (token != NULL && value != NULL)
+					{
+						if (setenv(token, value, 1) != 0)
+						{
+							fprintf(stderr, "Failed to set environment variable: %s=%s\n", token, value);
+						}
+					}
+					else
+					{
+						fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+					}
+				}
+				else if (strcmp(token, "unsetenv") == 0)
+				{
+					token = strtok(NULL, " ");
+					if (token != NULL)
+					{
+						if (unsetenv(token) != 0)
+						{
+							fprintf(stderr, "Failed to unset environment variable: %s\n", token);
+						}
+					}
+					else
+					{
+						fprintf(stderr, "Usage: unsetenv VARIABLE\n");
 					}
 				}
 				else
@@ -154,32 +192,38 @@ int main(void)
 						while (directory != NULL)
 						{
 							printf("directory is: %s\n", directory);
-							char *pathstep = pathname(av[0], directory);
-							if (pathstep == NULL)
-								return (-1);
-
-							gpid = fork();
-							if (gpid == -1)
+							pathstep = pathname(av[0], directory);
+							printf("pathstep is %s\n", pathstep);
+							if (pathstep != NULL)
 							{
-								perror("Fork error");
-								return (-1);
-							}
-							if (gpid == 0)
-							{
-
-								if (execve(pathstep, av, NULL) == -1)
+								printf("pathstep22 is %s\n", pathstep);
+								gpid = fork();
+								if (gpid == -1)
 								{
-									perror(av[0]);
+									perror("Fork error");
 									return (-1);
 								}
+								if (gpid == 0)
+								{
+
+									if (execve(pathstep, av, NULL) == -1)
+									{
+										perror(pathstep);
+										return (-1);
+									}
+								}
+								else
+								{
+									wait(NULL);
+								}
+								free(pathstep);
+
+								break;
+
 							}
-							else
-							{
-								wait(NULL);
-							}
-							break;
+
+							directory = strtok(NULL, ":");
 						}
-						directory = strtok(NULL, ":");
 					}
 					if (directory == NULL)
 					{
@@ -187,12 +231,15 @@ int main(void)
 					}
 				}
 			}
-			else
-			{
-				break;
-			}
+		}
+		else
+		{
+			break;
 		}
 
-		free(gcmd);
-		return 0;
 	}
+	free(pathstep);
+	free(gcmd);
+	return 0;
+
+}

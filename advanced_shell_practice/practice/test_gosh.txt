@@ -1,0 +1,74 @@
+#include "debs.h"
+#include <string.h>
+
+/**
+ * main - a gosh custom shell
+ * Return: exits or -1 on error
+ */
+/* extern char **environ; */
+
+int main(void)
+{
+	char *gcmd = NULL, *gcmd2, *gprompt = "($) ";
+	char *tokens, *delim = " ", *av;
+	ssize_t ret;
+	pid_t gpid;
+	size_t gsize = 0, ac = 0, i;
+
+	while (1)
+	{
+		write(1, gprompt, slen(gprompt));
+		ret = getline(&gcmd, &gsize, stdin);
+		if (ret < 0)
+			return (-1);
+		if (ret  > 0)
+		{
+			if (gcmd[0] != '\n')
+			{
+				gcmd[slen(gcmd) - 1] = '\0';
+				gcmd2 = strdup(gcmd);
+				tokens = stok(gcmd, delim);
+				while (tokens)
+				{
+					ac++;
+					tokens = stok(NULL, delim);
+				}
+
+				gpid = fork();
+
+				if (gpid == -1)
+				{
+					perror(gcmd);
+					return (-1);
+				}
+
+				if (gpid == 0)
+				{
+					tokens = stok(gcmd2, delim);
+					i = 0;
+					while (tokens)
+					{
+						av[i] = tokens;
+						tokens = stok(NULL, delim);
+					}
+					av[ac] = NULL;
+
+					if (execve(av[0], av, NULL) == -1)
+					{
+						perror(gcmd);
+						return (-1);
+					}
+				}
+				else
+				{
+					wait(NULL);
+
+				}
+			}
+		}
+		else
+			break;
+	}
+	free(gcmd);
+	return (0);
+}
