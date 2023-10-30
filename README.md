@@ -5,3 +5,4 @@
 ### A BMI calculator progam
 ### File I/O manipulation
 ### Building a Custom Shell in C.
+### automation scripts

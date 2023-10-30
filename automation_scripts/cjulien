@@ -1,0 +1,38 @@
+!#/bin/bash
+
+# A concept I learned from William Inyam
+# A script that saves you some compilation stress
+# If no file is provided, it alerts user
+# If just one file is provided, compiles with same file name
+# But with a .j (for julien) extention
+# If more than one file is provided, uses the last file entry to compile#
+
+#define variables#
+
+
+v_argv=("$@") #an array of all files passed for compilation
+len_argv=${#v_argv[@]} #the length of array
+current_argv=$(($len_argv - 1)) #number of files to be compiled
+
+if [[$len_argv -eq 0]]; then #if no file is passed
+echo "Files cannot be empty"
+
+elif [[$len_argv -eq 1]]; then #if just one file is passed
+out=$(echo $1 | rev | cut -d '.' -f2 | rev).j #retrieve file and add .j extention
+gcc -Wall -Werror -Wextra -pedantic -std=gnu89 ${v_argv[0]} -o $out #then compile
+
+else
+out=${v_argv[@]:$current_argv:$len_argv} #use the slice notation method to retrieve the last entry
+v_files=${v_argv[@]:0:$current_argv} #retrieve files to be compiled
+
+list="" #declare an empty variable
+
+for v_file in $v_files; do #temporarily store each element of v_files in v_file
+list+=" $v_files" #append each file to each other, adding a space
+
+done
+
+gcc -Wall -Werror -Wextra -pedantic -std=gnu89 $list -o $out
+#compile the $list of file to the '$out' file
+
+fi
